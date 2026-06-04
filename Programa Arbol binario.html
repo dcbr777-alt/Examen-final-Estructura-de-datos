@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Árbol AVL – Examen Final</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#0a0e1a; --panel:#111827; --border:#1e3a5f;
+  --accent:#00d4ff; --accent2:#ff6b35; --accent3:#7c3aed;
+  --green:#10b981; --red:#ef4444; --yellow:#f59e0b;
+  --text:#e2e8f0; --subtext:#94a3b8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;}
+
+header{
+  background:linear-gradient(135deg,#0a0e1a 0%,#0d1b3e 50%,#0a0e1a 100%);
+  border-bottom:2px solid var(--accent);padding:10px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:relative;overflow:hidden;height:58px;
+}
+header::before{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(0,212,255,.03) 40px,rgba(0,212,255,.03) 41px);}
+.header-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:1rem;
+  color:var(--accent);letter-spacing:2px;text-shadow:0 0 20px rgba(0,212,255,.6);}
+.header-sub{font-size:.7rem;color:var(--subtext);letter-spacing:1px;margin-top:2px;}
+.header-name{font-family:'Orbitron',sans-serif;font-weight:700;font-size:.85rem;color:var(--accent2);text-align:right;}
+.header-seq{font-size:.65rem;color:var(--yellow);background:rgba(245,158,11,.1);
+  padding:2px 8px;border-radius:4px;border:1px solid rgba(245,158,11,.3);display:inline-block;margin-top:2px;}
+
+.app{display:grid;grid-template-columns:240px 1fr 250px;height:calc(100vh - 58px);}
+
+.side-panel{background:var(--panel);display:flex;flex-direction:column;overflow:hidden;}
+.side-panel.left{border-right:1px solid var(--border);}
+.side-panel.right{border-left:1px solid var(--border);}
+.panel-header{padding:8px 12px;font-family:'Orbitron',sans-serif;font-size:.6rem;
+  letter-spacing:2px;color:var(--accent);text-transform:uppercase;
+  border-bottom:1px solid var(--border);background:rgba(0,212,255,.04);flex-shrink:0;}
+
+.ctrl-section{padding:8px 10px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.ctrl-label{font-size:.6rem;color:var(--subtext);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.input-row{display:flex;gap:5px;}
+.input-row input{flex:1;background:#0a0e1a;border:1px solid var(--border);
+  color:var(--text);padding:6px 8px;border-radius:5px;
+  font-family:'Share Tech Mono',monospace;font-size:.85rem;outline:none;transition:border .2s;}
+.input-row input:focus{border-color:var(--accent);}
+.btn{padding:6px 12px;border-radius:5px;border:none;cursor:pointer;
+  font-family:'Exo 2',sans-serif;font-weight:600;font-size:.75rem;transition:all .2s;letter-spacing:.5px;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover{background:#00b8d9;box-shadow:0 0 12px rgba(0,212,255,.4);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{background:#dc2626;}
+.btn-success{background:var(--green);color:#fff;}
+.btn-success:hover{background:#059669;}
+.btn-warn{background:var(--yellow);color:#000;}
+.btn-warn:hover{background:#d97706;}
+.btn-purple{background:var(--accent3);color:#fff;}
+.btn-purple:hover{background:#6d28d9;}
+.btn-full{width:100%;margin-top:4px;padding:7px;}
+.btn-sm{padding:5px 10px;font-size:.72rem;}
+
+.toggle-row{display:flex;align-items:center;gap:8px;padding:6px 0;}
+.toggle{position:relative;width:38px;height:20px;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#1e3a5f;border-radius:20px;cursor:pointer;transition:.3s;}
+.toggle-slider::before{content:'';position:absolute;width:14px;height:14px;
+  left:3px;top:3px;background:#94a3b8;border-radius:50%;transition:.3s;}
+.toggle input:checked+.toggle-slider{background:var(--accent);}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px);background:#fff;}
+.toggle-label{font-size:.72rem;color:var(--subtext);}
+
+.slider-row{display:flex;flex-direction:column;gap:3px;}
+.speed-slider{-webkit-appearance:none;width:100%;height:5px;
+  background:linear-gradient(90deg,var(--accent3),var(--accent));border-radius:3px;outline:none;cursor:pointer;}
+.speed-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
+  border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(0,212,255,.6);cursor:pointer;}
+.speed-val{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--accent);text-align:right;}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px 10px;flex-shrink:0;}
+.stat-box{background:#0a0e1a;border:1px solid var(--border);border-radius:5px;padding:6px;text-align:center;}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:1.1rem;color:var(--accent);font-weight:700;}
+.stat-key{font-size:.58rem;color:var(--subtext);text-transform:uppercase;letter-spacing:1px;margin-top:1px;}
+
+.log-area{flex:1;overflow-y:auto;padding:6px 10px;font-family:'Share Tech Mono',monospace;font-size:.67rem;line-height:1.6;}
+.log-area::-webkit-scrollbar{width:3px;}
+.log-area::-webkit-scrollbar-track{background:#0a0e1a;}
+.log-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.log-line{padding:1px 0;border-bottom:1px solid rgba(30,58,95,.3);}
+.log-line.insert{color:var(--green);}
+.log-line.delete{color:var(--red);}
+.log-line.search{color:var(--accent3);}
+.log-line.rotate{color:var(--yellow);}
+.log-line.info{color:var(--subtext);}
+.log-line.step{color:var(--accent);}
+
+.canvas-wrap{position:relative;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 0%,#0d1b3e 0%,var(--bg) 70%);}
+.canvas-wrap::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);}
+canvas{display:block;width:100%;height:100%;}
+.status-pill{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.75);border:1px solid var(--border);border-radius:20px;
+  padding:3px 14px;font-size:.68rem;color:var(--subtext);letter-spacing:1px;pointer-events:none;white-space:nowrap;}
+
+.export-row{display:flex;gap:5px;flex-wrap:wrap;padding:8px 10px;flex-shrink:0;}
+.step-ctrl{display:flex;gap:6px;align-items:center;padding:6px 10px;border-top:1px solid var(--border);flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-title">⬡ Examen Final — Estructuras de Datos</div>
+    <div class="header-sub">Universidad Distrital Francisco José de Caldas &nbsp;•&nbsp; Árbol AVL Interactivo</div>
+  </div>
+  <div style="text-align:right">
+    <div class="header-name">Leonel David Cabrera Esquivel</div>
+    <div class="header-seq">▶ Secuencia Personalizada #12</div>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- LEFT -->
+  <div class="side-panel left">
+    <div class="panel-header">⚙ Controles</div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-label">Insertar valor</div>
+      <div class="input-row">
+        <input type="number" id="insertVal" placeholder="Número…"/>
+        <button class="btn btn-success btn-sm" onclick="insertNode()">+</button>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-label">Eliminar valor</div>
+      <div class="input-row">
+        <input type="number" id="deleteVal" placeholder="Número…"/>
+        <button class="btn btn-danger btn-sm" onclick="deleteNode()">✕</button>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-label">Buscar (animado)</div>
+      <div class="input-row">
+        <input type="number" id="searchVal" placeholder="Número…"/>
+        <button class="btn btn-purple btn-sm" onclick="searchNode()">🔍</button>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-label">Velocidad de animación</div>
+      <div class="slider-row">
+        <input type="range" class="speed-slider" id="speedSlider" min="1" max="10" value="5" oninput="updateSpeed(this.value)"/>
+        <div class="speed-val" id="speedLabel">5× — Normal</div>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="toggle-row">
+        <label class="toggle">
+          <input type="checkbox" id="autoBalance" checked onchange="toggleMode()"/>
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label" id="modeLabel">Balanceo: Automático</span>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-label">Acciones</div>
+      <button class="btn btn-warn btn-full" onclick="loadExample()">★ Cargar Secuencia #12</button>
+      <button class="btn btn-primary btn-full" onclick="generateRandom()">⚄ Generar Aleatorio</button>
+      <button class="btn btn-danger btn-full" onclick="resetTree()">↺ Reiniciar Árbol</button>
+    </div>
+
+    <div class="step-ctrl" id="stepCtrl" style="display:none">
+      <button class="btn btn-warn btn-sm" onclick="stepBalance()">⏭ Paso</button>
+      <button class="btn btn-primary btn-sm" id="btnPlayPause" onclick="togglePlayPause()">▶ Auto</button>
+    </div>
+  </div>
+
+  <!-- CENTER CANVAS -->
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="avlCanvas"></canvas>
+    <div class="status-pill" id="statusPill">Árbol vacío — inserta un nodo para comenzar</div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="side-panel right">
+    <div class="panel-header">📊 Estadísticas</div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-val" id="statNodes">0</div><div class="stat-key">Nodos</div></div>
+      <div class="stat-box"><div class="stat-val" id="statHeight">—</div><div class="stat-key">Altura</div></div>
+      <div class="stat-box"><div class="stat-val" id="statMin">—</div><div class="stat-key">Mínimo</div></div>
+      <div class="stat-box"><div class="stat-val" id="statMax">—</div><div class="stat-key">Máximo</div></div>
+    </div>
+
+    <div class="panel-header">📋 Log de Operaciones</div>
+    <div class="log-area" id="logArea"></div>
+
+    <div class="panel-header">💾 Exportar</div>
+    <div class="export-row">
+      <button class="btn btn-primary btn-sm" onclick="exportPNG()">🖼 PNG</button>
+      <button class="btn btn-danger btn-sm"  onclick="exportPDF()">📄 PDF</button>
+      <button class="btn btn-warn btn-sm"    onclick="printTree()">🖨 Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// ════════════════════════════════════════════════════════
+//  AVL NODE
+// ════════════════════════════════════════════════════════
+class AVLNode {
+  constructor(val) {
+    this.val    = val;
+    this.left   = null;
+    this.right  = null;
+    this.height = 1;
+    // visual
+    this.x = 0; this.y = 0;    // target layout position
+    this.cx = 0; this.cy = 0;  // current drawn position (animated)
+    this.state = 'normal';     // normal|insert|rotate|search|delete
+    this.legPhase = 0;
+    this.initialized = false;  // first-time flag
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  AVL TREE
+// ════════════════════════════════════════════════════════
+class AVLTree {
+  constructor() { this.root = null; }
+
+  h(n)       { return n ? n.height : 0; }
+  bf(n)      { return n ? this.h(n.left) - this.h(n.right) : 0; }
+  upd(n)     { if (n) n.height = 1 + Math.max(this.h(n.left), this.h(n.right)); }
+
+  rotR(y) {
+    let x = y.left, T = x.right;
+    x.right = y; y.left = T;
+    this.upd(y); this.upd(x);
+    return x;
+  }
+  rotL(x) {
+    let y = x.right, T = y.left;
+    y.left = x; x.right = T;
+    this.upd(x); this.upd(y);
+    return y;
+  }
+  balance(n) {
+    this.upd(n);
+    const b = this.bf(n);
+    if (b >  1 && this.bf(n.left)  >= 0) return this.rotR(n);
+    if (b >  1 && this.bf(n.left)  <  0) { n.left  = this.rotL(n.left);  return this.rotR(n); }
+    if (b < -1 && this.bf(n.right) <= 0) return this.rotL(n);
+    if (b < -1 && this.bf(n.right) >  0) { n.right = this.rotR(n.right); return this.rotL(n); }
+    return n;
+  }
+  insert(n, v) {
+    if (!n) return new AVLNode(v);
+    if (v < n.val) n.left  = this.insert(n.left,  v);
+    else if (v > n.val) n.right = this.insert(n.right, v);
+    else return n;
+    return this.balance(n);
+  }
+  minNode(n) { return n.left ? this.minNode(n.left) : n; }
+  delete(n, v) {
+    if (!n) return null;
+    if (v < n.val)      n.left  = this.delete(n.left,  v);
+    else if (v > n.val) n.right = this.delete(n.right, v);
+    else {
+      if (!n.left || !n.right) return n.left || n.right;
+      const s = this.minNode(n.right);
+      n.val = s.val;
+      n.right = this.delete(n.right, s.val);
+    }
+    return this.balance(n);
+  }
+
+  find(n, v) {
+    if (!n) return null;
+    if (v === n.val) return n;
+    return v < n.val ? this.find(n.left, v) : this.find(n.right, v);
+  }
+  inorder(n = this.root, a = []) {
+    if (!n) return a;
+    this.inorder(n.left, a); a.push(n.val); this.inorder(n.right, a); return a;
+  }
+  getMin(n = this.root) { return n ? (n.left ? this.getMin(n.left) : n.val) : null; }
+  getMax(n = this.root) { return n ? (n.right ? this.getMax(n.right) : n.val) : null; }
+  height(n = this.root) { return this.h(n); }
+}
+
+// ════════════════════════════════════════════════════════
+//  LAYOUT  — Reingold-Tilford style, no overlaps
+//  NODE_SEP = min horizontal gap between sibling nodes
+//  LEVEL_H  = vertical distance between levels
+// ════════════════════════════════════════════════════════
+const NODE_R   = 22;   // node body radius
+const NODE_SEP = 14;   // min horizontal gap between adjacent nodes at same level
+const LEVEL_H  = 90;   // vertical distance between levels
+
+function layoutTree() {
+  if (!tree.root) return;
+
+  // Step 1 – assign preliminary x using post-order traversal (Reingold-Tilford)
+  // We use a simple contour-based approach:
+  //   each subtree gets a "left contour" and "right contour"
+  //   siblings are placed so their contours don't overlap
+
+  function layout(node, depth) {
+    if (!node) return null;
+
+    const left  = layout(node.left,  depth + 1);
+    const right = layout(node.right, depth + 1);
+
+    node.y = depth * LEVEL_H + 60;
+
+    if (!left && !right) {
+      // Leaf
+      node._x = 0;
+      node._lc = [0];  // left contour offsets
+      node._rc = [0];  // right contour offsets
+    } else if (!left) {
+      // Only right child
+      node._x = right._x - (NODE_R * 2 + NODE_SEP);
+      const shift = node._x - 0;   // root is 0, right child at right._x
+      // contours
+      node._lc = [0, ...right._lc.map(v => v + (right._x - node._x))];
+      node._rc = [0, ...right._rc.map(v => v + (right._x - node._x))];
+      // But left side is just node itself for depth 0
+      node._lc[0] = 0;
+      node._rc[0] = 0;
+    } else if (!right) {
+      // Only left child
+      node._x = left._x + (NODE_R * 2 + NODE_SEP);
+      node._lc = [0, ...left._lc.map(v => v + (left._x - node._x))];
+      node._rc = [0, ...left._rc.map(v => v + (left._x - node._x))];
+      node._lc[0] = 0;
+      node._rc[0] = 0;
+    } else {
+      // Both children exist — push them apart so contours don't overlap
+      // Find max overlap between left subtree's right contour and right subtree's left contour
+      const lrc = left._rc;
+      const rlc = right._lc;
+      const minLevels = Math.min(lrc.length, rlc.length);
+      let maxOverlap = 0;
+      for (let i = 0; i < minLevels; i++) {
+        // left subtree right contour relative to left._x
+        // right subtree left contour relative to right._x
+        // current separation = right._x - left._x
+        // overlap = (left._x + lrc[i]) + (NODE_R*2+NODE_SEP) - (right._x + rlc[i])
+        const overlap = (left._x + lrc[i]) - (right._x + rlc[i]) + NODE_R * 2 + NODE_SEP;
+        if (overlap > maxOverlap) maxOverlap = overlap;
+      }
+
+      // Shift children apart by maxOverlap/2 each
+      const shift = Math.ceil(maxOverlap / 2);
+      const lx = left._x  - shift;
+      const rx = right._x + shift;
+
+      // Merge contours
+      const depth0Contour = [0];
+      const mergedL = [0, ...left._lc.map(v => v + (lx - 0))];
+      const mergedR = [0, ...right._rc.map(v => v + (rx - 0))];
+      // Extend shorter contour
+      const ll = left._lc.length;
+      const rl = right._rc.length;
+      if (ll < rl) {
+        for (let i = ll; i < rl; i++) mergedL.push(right._lc[i] + (rx - 0));
+        // wait — for left contour we want the leftmost, so extend with right subtree
+        // Actually merge: left contour = left child's left contour; right contour = right child's right contour
+      }
+
+      node._x = 0;
+      // Place children symmetrically around node
+      // node is center; left child at lx, right child at rx
+      // Then node._x = (lx + rx) / 2  → but we keep node at 0 and shift children
+      const cx = (lx + rx) / 2;
+      // Shift everything so node is at 0
+      const leftFinal  = lx - cx;
+      const rightFinal = rx - cx;
+
+      // Write final relative x
+      left._relX  = leftFinal;
+      right._relX = rightFinal;
+      node._x = 0;
+
+      // Build new contours
+      const newLL = left._lc.map(v => v + leftFinal);
+      const newLR = left._rc.map(v => v + leftFinal);
+      const newRL = right._lc.map(v => v + rightFinal);
+      const newRR = right._rc.map(v => v + rightFinal);
+
+      // Left contour of subtree = node at 0, then left child's left contour
+      const lcFull = [0, ...newLL];
+      // If right subtree deeper, extend
+      if (newRL.length > newLL.length) {
+        for (let i = newLL.length; i < newRL.length; i++) lcFull.push(newRL[i]);
+      }
+
+      // Right contour = node at 0, then right child's right contour
+      const rcFull = [0, ...newRR];
+      if (newLR.length > newRR.length) {
+        for (let i = newRR.length; i < newLR.length; i++) rcFull.push(newLR[i]);
+      }
+
+      node._lc = lcFull;
+      node._rc = rcFull;
+    }
+    return node;
+  }
+
+  layout(tree.root, 0);
+
+  // Step 2 – convert relative offsets to absolute positions
+  function applyX(node, parentX) {
+    if (!node) return;
+    const relX = node._relX !== undefined ? node._relX : 0;
+    node._absX = parentX + relX;
+    node._relX = undefined;
+    applyX(node.left,  node._absX + (node.left  ? node.left._relX  || 0 : 0));
+    applyX(node.right, node._absX + (node.right ? node.right._relX || 0 : 0));
+  }
+
+  // Simpler: traverse and assign absolute x properly
+  function assignAbsolute(node, offsetX) {
+    if (!node) return;
+    node.x = offsetX;
+    if (node.left)  assignAbsolute(node.left,  offsetX + (node.left._relX  !== undefined ? node.left._relX  : 0));
+    if (node.right) assignAbsolute(node.right, offsetX + (node.right._relX !== undefined ? node.right._relX : 0));
+  }
+
+  // Re-do with a cleaner recursive absolute assignment
+  function computeAbsX(node, parentAbsX) {
+    if (!node) return;
+    // node._x is relative to parent; for root it's 0
+    // children have _relX set
+    if (node.left)  { node.left._absX  = parentAbsX + (node.left._relX  !== undefined ? node.left._relX  : 0); }
+    if (node.right) { node.right._absX = parentAbsX + (node.right._relX !== undefined ? node.right._relX : 0); }
+    computeAbsX(node.left,  node.left  ? node.left._absX  : 0);
+    computeAbsX(node.right, node.right ? node.right._absX : 0);
+  }
+
+  // ---- Cleaner rewrite of layout using a well-known simple approach ----
+  // We'll use the "minimum width" approach:
+  // 1. Count leaves in each subtree → width
+  // 2. Place nodes by giving each leaf a unit slot
+  //    slot width = max(NODE_R*2+NODE_SEP, canvasWidth/leafCount)
+
+  const W = canvas.width;
+  const H = canvas.height;
+
+  // Count leaves
+  function countLeaves(n) {
+    if (!n) return 0;
+    if (!n.left && !n.right) return 1;
+    return countLeaves(n.left) + countLeaves(n.right);
+  }
+
+  const totalLeaves = Math.max(countLeaves(tree.root), 1);
+  const slotW = Math.max(NODE_R * 2 + NODE_SEP, (W - 40) / totalLeaves);
+  const treeWidth = totalLeaves * slotW;
+  const offsetX = (W - treeWidth) / 2 + slotW / 2;
+
+  // Assign leaf slots in order, then parents get center of children
+  let leafIdx = 0;
+  function assignLeafSlots(n) {
+    if (!n) return;
+    if (!n.left && !n.right) {
+      n.x = offsetX + leafIdx * slotW;
+      leafIdx++;
+    } else {
+      assignLeafSlots(n.left);
+      assignLeafSlots(n.right);
+      const lx = n.left  ? n.left.x  : (n.right ? n.right.x : 0);
+      const rx = n.right ? n.right.x : (n.left  ? n.left.x  : 0);
+      n.x = (lx + rx) / 2;
+    }
+  }
+
+  const maxDepth = tree.height(tree.root);
+  const availH = H - 80;
+  const actualLevelH = Math.min(LEVEL_H, availH / Math.max(maxDepth, 1));
+
+  function assignDepth(n, d) {
+    if (!n) return;
+    n.y = d * actualLevelH + 55;
+    assignDepth(n.left,  d + 1);
+    assignDepth(n.right, d + 1);
+  }
+
+  assignLeafSlots(tree.root);
+  assignDepth(tree.root, 0);
+
+  // Initialize cx/cy for new nodes (ones that haven't been placed yet)
+  gatherNodes().forEach(n => {
+    if (!n.initialized) {
+      n.cx = n.x;
+      n.cy = n.y;
+      n.initialized = true;
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+const SEQ12 = [52,32,82,22,42,72,92,40,41,39,38,43];
+
+let tree        = new AVLTree();
+let animSpeed   = 5;
+let autoBalance = true;
+let playing     = false;
+let stepQueue   = [];
+let statusMsg   = 'Árbol vacío — inserta un nodo para comenzar';
+let busy        = false;   // block concurrent inserts
+let walkingNode = null;    // the node currently mid-walk (skip its edge until arrived)
+
+const canvas = document.getElementById('avlCanvas');
+const ctx    = canvas.getContext('2d');
+
+function speedMs() {
+  return [3000,2200,1600,1100,750,500,350,230,170,120][animSpeed - 1];
+}
+function updateSpeed(v) {
+  animSpeed = +v;
+  const lbs = ['1× — Muy Lenta','2×','3×','4×','5× — Normal','6×','7×','8×','9×','10× — Máx'];
+  document.getElementById('speedLabel').textContent = lbs[v - 1];
+}
+
+// ════════════════════════════════════════════════════════
+//  LOG
+// ════════════════════════════════════════════════════════
+function log(msg, cls = 'info') {
+  const el  = document.getElementById('logArea');
+  const ts  = new Date().toLocaleTimeString('es-CO', {hour12: false});
+  const div = document.createElement('div');
+  div.className   = 'log-line ' + cls;
+  div.textContent = `[${ts}] ${msg}`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ════════════════════════════════════════════════════════
+//  GATHER NODES (in-order flat list)
+// ════════════════════════════════════════════════════════
+function gatherNodes(n = tree.root, arr = []) {
+  if (!n) return arr;
+  gatherNodes(n.left,  arr);
+  arr.push(n);
+  gatherNodes(n.right, arr);
+  return arr;
+}
+
+function updateStats() {
+  const arr = gatherNodes();
+  document.getElementById('statNodes').textContent  = arr.length;
+  document.getElementById('statHeight').textContent = tree.height() || '—';
+  document.getElementById('statMin').textContent    = tree.getMin() ?? '—';
+  document.getElementById('statMax').textContent    = tree.getMax() ?? '—';
+}
+
+function setStatus(m) { statusMsg = m; }
+
+// ════════════════════════════════════════════════════════
+//  GLIDE — animate all nodes from current cx/cy → target x/y
+// ════════════════════════════════════════════════════════
+function animateGlide(doneCallback) {
+  const nds    = gatherNodes();
+  const starts = nds.map(n => ({x: n.cx, y: n.cy}));
+  const ms     = speedMs() * 0.6;
+  const frames = Math.max(12, ms / (1000 / 60));
+  let f = 0;
+
+  function tick() {
+    const t    = Math.min(f / frames, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    nds.forEach((n, i) => {
+      n.cx       = starts[i].x + (n.x - starts[i].x) * ease;
+      n.cy       = starts[i].y + (n.y - starts[i].y) * ease;
+      n.legPhase += (t < 1 ? 0.25 : 0);
+    });
+    draw();
+    f++;
+    if (t < 1) requestAnimationFrame(tick);
+    else {
+      nds.forEach(n => { n.cx = n.x; n.cy = n.y; n.legPhase = 0; });
+      draw();
+      if (doneCallback) doneCallback();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// ════════════════════════════════════════════════════════
+//  INSERT WITH WALKING ANIMATION
+// ════════════════════════════════════════════════════════
+function insertNode(val) {
+  if (val === undefined) {
+    val = +document.getElementById('insertVal').value;
+    document.getElementById('insertVal').value = '';
+  }
+  if (isNaN(val) || val === '') return;
+  if (busy) return;
+
+  if (tree.find(tree.root, val)) { log(`⚠ ${val} ya existe`, 'info'); return; }
+
+  // Record descent path BEFORE inserting
+  const path = [];
+  let cur = tree.root;
+  while (cur) {
+    path.push({ node: cur, dir: val < cur.val ? 'L' : 'R' });
+    cur = val < cur.val ? cur.left : cur.right;
+  }
+
+  log(`▶ Insertar: ${val}`, 'insert');
+  path.forEach(p => log(`  ${p.node.val} → ${p.dir === 'L' ? '◀ Izquierda' : '▶ Derecha'}`, 'step'));
+
+  busy = true;
+
+  // Insert into tree structure
+  tree.root = tree.insert(tree.root, val);
+  layoutTree();
+
+  const newNode = tree.find(tree.root, val);
+  if (!newNode) { busy = false; return; }
+
+  newNode.state = 'insert';
+  newNode.initialized = true;
+  walkingNode = newNode;   // mark as in-flight so its edge is suppressed
+
+  // Build waypoints: enter from above, then go directly node → child → child → final
+  // Each step is a straight diagonal move, left or right as chosen at each parent.
+  const waypoints = [];
+  if (path.length === 0) {
+    // Inserting as root — drop straight down from top
+    waypoints.push({ x: newNode.x, y: -30 });
+  } else {
+    // Enter from above the root
+    waypoints.push({ x: path[0].node.x, y: path[0].node.y - 60 });
+    // Then visit each parent node position (so it visibly "checks" each one)
+    path.forEach(p => waypoints.push({ x: p.node.x, y: p.node.y }));
+  }
+  waypoints.push({ x: newNode.x, y: newNode.y });
+
+  // Start the node at the first waypoint
+  newNode.cx = waypoints[0].x;
+  newNode.cy = waypoints[0].y;
+
+  const ms      = speedMs();
+  const fpw     = Math.max(10, Math.floor((ms * 0.9) / (waypoints.length * (1000 / 60))));
+  let   wpIdx   = 0;
+  let   wpFrame = 0;
+
+  function walkFrame() {
+    if (wpIdx >= waypoints.length - 1) {
+      // Arrived — snap to exact position and connect the edge
+      newNode.cx = newNode.x;
+      newNode.cy = newNode.y;
+      newNode.legPhase = 0;
+      walkingNode = null;   // now show its edge
+
+      log(`✓ ${val} insertado — h:${newNode.height} FE:${tree.bf(newNode)}`, 'insert');
+      setStatus(`✓ ${val} insertado`);
+
+      // Glide all other nodes to their new positions (in case tree was re-balanced)
+      layoutTree();
+      animateGlide(() => {
+        newNode.state = 'normal';
+        updateStats();
+        draw();
+
+        if (!autoBalance) {
+          showStepCtrl(true);
+          buildStepQueue();
+        }
+        busy = false;
+      });
+      return;
+    }
+
+    const t    = wpFrame / fpw;
+    const ease = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    const from = waypoints[wpIdx];
+    const to   = waypoints[wpIdx + 1];
+
+    newNode.cx = from.x + (to.x - from.x) * ease;
+    newNode.cy = from.y + (to.y - from.y) * ease;
+    newNode.legPhase += 0.35;
+
+    // Briefly highlight the current branch node
+    if (wpIdx > 0 && wpIdx <= path.length && wpFrame === 0) {
+      const pidx = wpIdx - 1;
+      path[pidx].node.state = 'insert';
+      const pnode = path[pidx].node;
+      setTimeout(() => { if (pnode) pnode.state = 'normal'; }, fpw * 16);
+    }
+
+    draw();
+    wpFrame++;
+    if (wpFrame >= fpw) { wpIdx++; wpFrame = 0; }
+    requestAnimationFrame(walkFrame);
+  }
+  requestAnimationFrame(walkFrame);
+}
+
+// ════════════════════════════════════════════════════════
+//  DELETE
+// ════════════════════════════════════════════════════════
+function deleteNode(val) {
+  if (val === undefined) {
+    val = +document.getElementById('deleteVal').value;
+    document.getElementById('deleteVal').value = '';
+  }
+  if (isNaN(val)) return;
+  if (busy) return;
+
+  const found = tree.find(tree.root, val);
+  if (!found) { log(`⚠ ${val} no encontrado`, 'info'); return; }
+
+  log(`✕ Eliminar: ${val}`, 'delete');
+  found.state = 'delete';
+  draw();
+  busy = true;
+
+  setTimeout(() => {
+    tree.root = tree.delete(tree.root, val);
+    layoutTree();
+    animateGlide(() => {
+      updateStats();
+      setStatus(`✓ ${val} eliminado`);
+      log(`✓ ${val} eliminado y árbol rebalanceado`, 'delete');
+      busy = false;
+    });
+  }, speedMs() * 0.5);
+}
+
+// ════════════════════════════════════════════════════════
+//  SEARCH ANIMATION
+// ════════════════════════════════════════════════════════
+function searchNode(val) {
+  if (val === undefined) {
+    val = +document.getElementById('searchVal').value;
+    document.getElementById('searchVal').value = '';
+  }
+  if (isNaN(val)) return;
+
+  log(`🔍 Buscar: ${val}`, 'search');
+  const path = [];
+  let n = tree.root;
+  while (n) {
+    path.push(n);
+    if (n.val === val) break;
+    n = val < n.val ? n.left : n.right;
+  }
+  const found = n && n.val === val;
+  let i = 0;
+  const ms = speedMs() * 0.5;
+
+  function step() {
+    if (i > 0) path[i - 1].state = 'normal';
+    if (i >= path.length) {
+      if (found) {
+        path[path.length - 1].state = 'search';
+        log(`✓ ${val} ENCONTRADO`, 'search');
+        setStatus(`✓ ${val} encontrado`);
+        setTimeout(() => { path.forEach(nd => nd.state = 'normal'); draw(); }, speedMs());
+      } else {
+        log(`✗ ${val} no encontrado`, 'search');
+        setStatus(`✗ ${val} no encontrado`);
+      }
+      draw(); return;
+    }
+    path[i].state = 'search';
+    log(`  Visitando ${path[i].val} → ${val < path[i].val ? '◀ izq' : val > path[i].val ? '▶ der' : '✓ aquí'}`, 'search');
+    draw();
+    i++;
+    setTimeout(step, ms);
+  }
+  step();
+}
+
+// ════════════════════════════════════════════════════════
+//  STEP-BY-STEP BALANCE
+// ════════════════════════════════════════════════════════
+function buildStepQueue() {
+  stepQueue = [];
+  function check(n) {
+    if (!n) return;
+    check(n.left); check(n.right);
+    const b = tree.bf(n);
+    if (Math.abs(b) > 1) {
+      const type = b > 1
+        ? (tree.bf(n.left) >= 0 ? 'Rotación Simple Derecha' : 'Rotación Doble Izq-Der')
+        : (tree.bf(n.right) <= 0 ? 'Rotación Simple Izquierda' : 'Rotación Doble Der-Izq');
+      stepQueue.push({ val: n.val, type });
+    }
+  }
+  check(tree.root);
+  log(`⚙ ${stepQueue.length} rotación(es) pendiente(s)`, 'step');
+}
+
+function stepBalance() {
+  if (stepQueue.length === 0) {
+    log('✓ Árbol ya balanceado', 'info');
+    showStepCtrl(false);
+    return;
+  }
+  const s = stepQueue.shift();
+  const n = tree.find(tree.root, s.val);
+  if (n) { n.state = 'rotate'; draw(); }
+  log(`↻ ${s.type} en nodo ${s.val}`, 'rotate');
+
+  setTimeout(() => {
+    // Re-balance the whole tree (simplest correct approach)
+    tree.root = rebalanceFull(tree.root);
+    layoutTree();
+    animateGlide(() => {
+      updateStats();
+      if (stepQueue.length === 0) {
+        log('✓ Árbol completamente balanceado', 'step');
+        showStepCtrl(false);
+      }
+    });
+  }, speedMs() * 0.7);
+}
+
+function rebalanceFull(n) {
+  if (!n) return null;
+  n.left  = rebalanceFull(n.left);
+  n.right = rebalanceFull(n.right);
+  return tree.balance(n);
+}
+
+function togglePlayPause() {
+  playing = !playing;
+  document.getElementById('btnPlayPause').textContent = playing ? '⏸ Pausa' : '▶ Auto';
+  if (playing) autoStepLoop();
+}
+
+function autoStepLoop() {
+  if (!playing || stepQueue.length === 0) {
+    playing = false;
+    document.getElementById('btnPlayPause').textContent = '▶ Auto';
+    return;
+  }
+  stepBalance();
+  setTimeout(autoStepLoop, speedMs() * 1.5);
+}
+
+function showStepCtrl(show) {
+  document.getElementById('stepCtrl').style.display = (show && !autoBalance) ? 'flex' : 'none';
+}
+
+// ════════════════════════════════════════════════════════
+//  DRAW
+// ════════════════════════════════════════════════════════
+function resizeCanvas() {
+  const wrap = document.getElementById('canvasWrap');
+  canvas.width  = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  layoutTree();
+  draw();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw edges first
+  drawEdges(tree.root);
+
+  // Draw nodes on top
+  gatherNodes().forEach(n => drawPersonNode(n));
+
+  document.getElementById('statusPill').textContent = statusMsg;
+}
+
+function drawEdges(n) {
+  if (!n) return;
+  // Don't draw edge TO a node that is still walking to its position
+  if (n.left  && n.left  !== walkingNode) drawEdge(n, n.left);
+  if (n.right && n.right !== walkingNode) drawEdge(n, n.right);
+  drawEdges(n.left);
+  drawEdges(n.right);
+}
+
+function drawEdge(p, c) {
+  ctx.beginPath();
+  ctx.moveTo(p.cx, p.cy + NODE_R);
+  ctx.lineTo(c.cx, c.cy - NODE_R - 10);  // -10 for head clearance
+  ctx.strokeStyle = 'rgba(30,100,180,0.5)';
+  ctx.lineWidth   = 1.5;
+  ctx.stroke();
+}
+
+function nodeColor(state) {
+  switch (state) {
+    case 'insert': return { body: '#064e3b', border: '#10b981', glow: 'rgba(16,185,129,.45)' };
+    case 'rotate': return { body: '#78350f', border: '#f59e0b', glow: 'rgba(245,158,11,.45)' };
+    case 'search': return { body: '#4c1d95', border: '#a78bfa', glow: 'rgba(167,139,250,.45)' };
+    case 'delete': return { body: '#7f1d1d', border: '#ef4444', glow: 'rgba(239,68,68,.45)' };
+    default:       return { body: '#1e293b', border: '#3b82f6', glow: 'rgba(59,130,246,.2)' };
+  }
+}
+
+function drawPersonNode(n) {
+  const x   = n.cx, y = n.cy;
+  const col = nodeColor(n.state);
+  const leg = Math.sin(n.legPhase) * 10;
+
+  ctx.save();
+  ctx.shadowColor = col.glow;
+  ctx.shadowBlur  = 18;
+
+  // Body circle
+  ctx.beginPath();
+  ctx.arc(x, y, NODE_R, 0, Math.PI * 2);
+  ctx.fillStyle   = col.body;
+  ctx.fill();
+  ctx.strokeStyle = col.border;
+  ctx.lineWidth   = 2;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(x, y - NODE_R - 11, 9, 0, Math.PI * 2);
+  ctx.fillStyle   = col.body;
+  ctx.fill();
+  ctx.strokeStyle = col.border;
+  ctx.lineWidth   = 1.5;
+  ctx.stroke();
+
+  // Eyes
+  ctx.fillStyle = col.border;
+  ctx.beginPath(); ctx.arc(x - 3, y - NODE_R - 12, 1.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 3, y - NODE_R - 12, 1.5, 0, Math.PI * 2); ctx.fill();
+
+  // Arms
+  ctx.strokeStyle = col.border;
+  ctx.lineWidth   = 2;
+  ctx.lineCap     = 'round';
+  const armSwing  = n.state === 'rotate' ? 14 : 7;
+  ctx.beginPath();
+  ctx.moveTo(x - NODE_R * 0.55, y - 4);
+  ctx.lineTo(x - NODE_R - armSwing, y + 4 + Math.sin(n.legPhase) * 4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x + NODE_R * 0.55, y - 4);
+  ctx.lineTo(x + NODE_R + armSwing, y + 4 - Math.sin(n.legPhase) * 4);
+  ctx.stroke();
+
+  // Legs
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y + NODE_R - 4);
+  ctx.lineTo(x - 8 + leg, y + NODE_R + 18);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y + NODE_R - 4);
+  ctx.lineTo(x + 8 - leg, y + NODE_R + 18);
+  ctx.stroke();
+
+  // Value
+  ctx.fillStyle    = '#e2e8f0';
+  ctx.font         = `bold 11px 'Share Tech Mono', monospace`;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(n.val, x, y);
+
+  // h and FE badge
+  const bfVal   = tree.bf(n);
+  const bfColor = Math.abs(bfVal) > 1 ? '#ef4444' : Math.abs(bfVal) === 1 ? '#f59e0b' : '#10b981';
+  ctx.font      = '8.5px "Share Tech Mono", monospace';
+  ctx.fillStyle = 'rgba(0,0,0,.75)';
+  const bw = 46, bh = 13;
+  ctx.fillRect(x - bw / 2, y + NODE_R + 20, bw, bh);
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle    = '#94a3b8';
+  ctx.fillText(`h:${n.height}`, x - 10, y + NODE_R + 27);
+  ctx.fillStyle = bfColor;
+  ctx.fillText(`FE:${bfVal}`, x + 11, y + NODE_R + 27);
+
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════════
+//  ACTIONS
+// ════════════════════════════════════════════════════════
+let loadTimer = null;
+
+function loadExample() {
+  if (loadTimer) clearTimeout(loadTimer);
+  resetTree(true);
+  log('★ Cargando Secuencia Personalizada #12', 'insert');
+  log(`  Secuencia: ${SEQ12.join(' → ')}`, 'info');
+
+  let i = 0;
+  const ms = speedMs() * 1.5;
+
+  function next() {
+    if (i >= SEQ12.length) { log('✓ Secuencia #12 cargada', 'insert'); setStatus('Secuencia #12 cargada'); return; }
+    if (busy) { loadTimer = setTimeout(next, 200); return; }
+    insertNode(SEQ12[i++]);
+    loadTimer = setTimeout(next, ms);
+  }
+  next();
+}
+
+function generateRandom() {
+  if (loadTimer) clearTimeout(loadTimer);
+  resetTree(true);
+  const n    = Math.floor(Math.random() * 16) + 5;
+  const vals = new Set();
+  while (vals.size < n) vals.add(Math.floor(Math.random() * 98) + 1);
+  const arr = [...vals];
+  log(`⚄ Aleatorio (${n} nodos): ${arr.join(', ')}`, 'info');
+
+  let i = 0;
+  const ms = speedMs() * 1.2;
+  function next() {
+    if (i >= arr.length) { log('✓ Árbol aleatorio listo', 'info'); return; }
+    if (busy) { setTimeout(next, 200); return; }
+    insertNode(arr[i++]);
+    setTimeout(next, ms);
+  }
+  next();
+}
+
+function resetTree(silent = false) {
+  if (loadTimer) clearTimeout(loadTimer);
+  tree       = new AVLTree();
+  stepQueue  = [];
+  playing    = false;
+  busy       = false;
+  walkingNode = null;
+  showStepCtrl(false);
+  layoutTree();
+  updateStats();
+  setStatus('Árbol reiniciado');
+  draw();
+  if (!silent) log('↺ Árbol reiniciado', 'info');
+}
+
+function toggleMode() {
+  autoBalance = document.getElementById('autoBalance').checked;
+  document.getElementById('modeLabel').textContent = autoBalance ? 'Balanceo: Automático' : 'Balanceo: Paso a Paso';
+  log(`⚙ Modo: ${autoBalance ? 'Automático' : 'Paso a Paso'}`, 'info');
+}
+
+// ════════════════════════════════════════════════════════
+//  EXPORTS
+// ════════════════════════════════════════════════════════
+function exportPNG() {
+  layoutTree(); draw();
+  const a  = document.createElement('a');
+  a.download = 'AVL_Leonel_Cabrera.png';
+  a.href     = canvas.toDataURL('image/png');
+  a.click();
+  log('🖼 PNG exportado', 'info');
+}
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  doc.setFillColor(10, 14, 26);
+  doc.rect(0, 0, 297, 210, 'F');
+
+  doc.setTextColor(0, 212, 255);
+  doc.setFontSize(15); doc.setFont('helvetica', 'bold');
+  doc.text('Árbol AVL — Examen Final Estructuras de Datos', 14, 16);
+
+  doc.setTextColor(220, 220, 220); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  doc.text('Universidad Distrital Francisco José de Caldas  |  Leonel David Cabrera Esquivel  |  Carné: 20252578011', 14, 23);
+  doc.text(`Fecha: ${new Date().toLocaleDateString('es-CO')}  Hora: ${new Date().toLocaleTimeString('es-CO')}`, 14, 29);
+
+  doc.setTextColor(0, 212, 255); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+  doc.text('Estadísticas', 14, 40);
+
+  doc.setTextColor(200, 200, 200); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  const nd = gatherNodes();
+  [
+    `Nodos totales: ${nd.length}`,
+    `Altura del árbol: ${tree.height()}`,
+    `Valor mínimo: ${tree.getMin() ?? '—'}`,
+    `Valor máximo: ${tree.getMax() ?? '—'}`,
+    `Recorrido en orden: ${tree.inorder().join(', ')}`,
+    `Secuencia personalizada #12: ${SEQ12.join(', ')}`,
+  ].forEach((t, i) => doc.text(`• ${t}`, 14, 48 + i * 6));
+
+  const img  = canvas.toDataURL('image/png');
+  const asp  = canvas.width / canvas.height;
+  const maxW = 262, maxH = 115;
+  let iw = maxW, ih = maxW / asp;
+  if (ih > maxH) { ih = maxH; iw = maxH * asp; }
+  doc.addImage(img, 'PNG', 14, 88, iw, ih);
+  doc.save('AVL_Leonel_Cabrera.pdf');
+  log('📄 PDF exportado', 'info');
+}
+
+function printTree() {
+  layoutTree(); draw();
+  const url = canvas.toDataURL('image/png');
+  const w   = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>AVL – Leonel Cabrera</title>
+<style>body{margin:0;background:#0a0e1a;color:#e2e8f0;font-family:sans-serif;text-align:center;padding:20px}
+h2{color:#00d4ff;margin-bottom:6px}img{max-width:100%;border:2px solid #1e3a5f;border-radius:8px}</style></head>
+<body><h2>Árbol AVL — Leonel David Cabrera Esquivel</h2>
+<p>Universidad Distrital Francisco José de Caldas | ${new Date().toLocaleDateString('es-CO')}</p>
+<img src="${url}"/></body></html>`);
+  w.document.close(); w.print();
+  log('🖨 Enviado a impresora', 'info');
+}
+
+// ════════════════════════════════════════════════════════
+//  KEYBOARD
+// ════════════════════════════════════════════════════════
+document.getElementById('insertVal').addEventListener('keydown', e => { if (e.key === 'Enter') insertNode(); });
+document.getElementById('deleteVal').addEventListener('keydown', e => { if (e.key === 'Enter') deleteNode(); });
+document.getElementById('searchVal').addEventListener('keydown', e => { if (e.key === 'Enter') searchNode(); });
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+log('⬡ Sistema AVL inicializado', 'info');
+log(`  Secuencia #12: ${SEQ12.join(' → ')}`, 'info');
+setStatus('Árbol vacío — inserta un nodo para comenzar');
+draw();
+</script>
+</body>
+</html>
